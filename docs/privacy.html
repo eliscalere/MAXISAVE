@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Maxisave</title>
+<meta name="description" content="Maxisave privacy policy: what is stored, where, for how long, and what is deliberately never collected.">
+<link rel="icon" href="assets/icon-512.png">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <img class="mark" src="assets/logo-transparent.png" alt="Maxisave" style="height:64px;">
+    <h1 style="font-size:28px;">Privacy Policy</h1>
+    <p class="tagline" style="font-size:14px; color:rgba(255,255,255,0.75);">Effective 7 August 2026 · Scalere Design</p>
+    <nav class="site">
+      <a href="index.html">Home</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/eliscalere/MAXISAVE">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <h2>The short version</h2>
+    <p>
+      Maxisave does not collect, transmit, sell, or share any data. Nothing you
+      type ever leaves your computer. There are no servers, no analytics, no
+      telemetry, no third-party services, and no network requests of any kind.
+    </p>
+  </section>
+
+  <section>
+    <h2>What is stored, and where</h2>
+    <p>Everything is stored locally in your own browser profile, on your own machine:</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Report text</h3>
+        <p><code class="inline">localStorage</code> on <code class="inline">cm.maxient.com</code> — put back after a refresh.</p>
+      </div>
+      <div class="card">
+        <h3>Attachments (opt-in only)</h3>
+        <p>IndexedDB (<code class="inline">maxisave</code> → <code class="inline">attachments</code>) — restored only if you chose to save them.</p>
+      </div>
+      <div class="card">
+        <h3>Your attachment choice</h3>
+        <p><code class="inline">localStorage</code> — remembers whether you opted in.</p>
+      </div>
+    </div>
+    <p>
+      Because this is ordinary browser storage tied to one site and one
+      profile, a draft saved on one computer cannot be read from another, by
+      another browser, or by another profile on the same computer.
+    </p>
+  </section>
+
+  <section>
+    <h2>What is deliberately never stored</h2>
+    <ul>
+      <li>Session security tokens (<code class="inline">x_requestor_token</code>, <code class="inline">x_requestor_ip</code>, <code class="inline">x_requestor_starttime</code>) and the reCAPTCHA response.</li>
+      <li>Any field of type <code class="inline">password</code>.</li>
+      <li>Attachments, unless you explicitly opt in.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>How long it is kept</h2>
+    <p>
+      A draft is deleted when you submit the form, when you press
+      <strong>Clear</strong>, or automatically 14 days after it was last saved
+      — whichever comes first. You can also remove it at any time by clearing
+      site data for <code class="inline">cm.maxient.com</code> in Chrome.
+    </p>
+  </section>
+
+  <section>
+    <h2>Permissions</h2>
+    <p>
+      Maxisave requests no Chrome permissions. It runs a single content script
+      limited to <code class="inline">cm.maxient.com/reportingform.php*</code>
+      and cannot see any other site.
+    </p>
+  </section>
+
+  <section>
+    <div class="callout warn">
+      <strong>A note on sensitive content.</strong> Incident reports contain
+      personal information about named individuals. While Maxisave is saving a
+      draft, that text sits unencrypted in your browser profile until you
+      submit, clear it, or the 14 days elapse — the same way an unsent draft
+      sits in any application. On a shared or lab computer, press
+      <strong>Clear</strong> before you walk away.
+    </div>
+  </section>
+
+  <section>
+    <h2>Changes</h2>
+    <p>Any change to this policy will be published at this URL and reflected in the extension's Chrome Web Store listing.</p>
+  </section>
+
+  <section>
+    <h2>Contact</h2>
+    <!-- TODO: publish a real contact email here -->
+    <p>Scalere Design — via the <a href="https://github.com/eliscalere/MAXISAVE/issues/new">GitHub issue tracker</a></p>
+  </section>
+
+  <p class="lede" style="font-size:13px; margin-top:40px;">
+    Maxisave is an independent tool. It is not affiliated with, endorsed by, or
+    sponsored by Maxient LLC or Arizona State University.
+  </p>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="credit">
+      <!-- TODO: swap in the real Scalere Design wordmark asset once supplied -->
+      <span class="wordmark-fallback">Scalere Design</span>
+    </div>
+    <div class="links">
+      <a href="index.html">Home</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/eliscalere/MAXISAVE">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

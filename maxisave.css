@@ -1,0 +1,153 @@
+/* Maxisave — by Scalere Design
+   Status pill, themed to match the host form's own palette. */
+
+.mxa-root {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  font-family: Proxima-nova, "Proxima Nova", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.mxa-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  /* Hairline keeps the pill legible against the maroon page margin as well as
+     the white form panel. */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 3px 12px rgba(0, 0, 0, 0.35);
+  border-radius: 4px;
+}
+
+.mxa-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 340px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #191919;
+  border-left: 4px solid #ffc627;
+  border-radius: 4px;
+  line-height: 1.35;
+  text-align: left;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+}
+
+.mxa-notice[hidden] { display: none; }
+
+.mxa-notice[data-state="on"] {
+  border-left-color: #78be20;
+}
+
+.mxa-notice-btn {
+  appearance: none;
+  flex: 0 0 auto;
+  border: 1px solid #8c1d40;
+  background: #fff;
+  color: #8c1d40;
+  font: inherit;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mxa-notice-btn:hover,
+.mxa-notice-btn:focus-visible {
+  background: #8c1d40;
+  color: #fff;
+}
+
+.mxa-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: #8c1d40;
+  color: #fff;
+  border-radius: 4px 0 0 4px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.mxa-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffc627;
+  flex: 0 0 auto;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.mxa-pill[data-state="saving"] .mxa-dot,
+.mxa-pill[data-state="restoring"] .mxa-dot,
+.mxa-pill[data-state="clearing"] .mxa-dot {
+  animation: mxa-pulse 0.9s ease-in-out infinite;
+}
+
+.mxa-pill[data-state="saved"] .mxa-dot,
+.mxa-pill[data-state="restored"] .mxa-dot {
+  background: #78be20;
+}
+
+.mxa-pill[data-state="cleared"] .mxa-dot {
+  background: #fff;
+  opacity: 0.55;
+}
+
+.mxa-pill[data-state="error"] .mxa-dot {
+  background: #e74c3c;
+}
+
+@keyframes mxa-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
+}
+
+.mxa-clear {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 9px 14px;
+  background: #ffc627;
+  color: #191919;
+  font: inherit;
+  font-weight: 700;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.mxa-clear:hover,
+.mxa-clear:focus-visible {
+  background: #ffd964;
+}
+
+.mxa-clear:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -4px;
+}
+
+@media (max-width: 640px) {
+  .mxa-root {
+    right: 10px;
+    bottom: 10px;
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mxa-pill[data-state="saving"] .mxa-dot,
+  .mxa-pill[data-state="restoring"] .mxa-dot,
+  .mxa-pill[data-state="clearing"] .mxa-dot { animation: none; }
+}

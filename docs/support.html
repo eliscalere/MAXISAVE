@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support — Maxisave</title>
+<meta name="description" content="Get help with Maxisave: common issues, how the autosave works, and how to report a bug.">
+<link rel="icon" href="assets/icon-512.png">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <img class="mark" src="assets/logo-transparent.png" alt="Maxisave" style="height:64px;">
+    <h1 style="font-size:28px;">Support</h1>
+    <nav class="site">
+      <a href="index.html">Home</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/eliscalere/MAXISAVE">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <h2>Report an issue</h2>
+    <p>
+      The fastest way to get help is to
+      <a href="https://github.com/eliscalere/MAXISAVE/issues/new">open an issue on GitHub</a>.
+      Include what you were doing, what you expected, and what happened instead — a
+      screenshot of the status pill helps a lot.
+    </p>
+  </section>
+
+  <section>
+    <h2>Common questions</h2>
+
+    <h3>My draft didn't come back after a refresh</h3>
+    <p>
+      Check the corner of the page for the status pill first — it should read
+      "Draft restored from …" a moment after the page loads. If it says
+      "Autosave on" instead, no draft was found for that browser profile; drafts
+      are per-profile and per-computer, so they won't appear if you're signed
+      into a different Chrome profile or a different machine.
+    </p>
+
+    <h3>Some Involved Parties rows are missing or blank</h3>
+    <p>
+      This should be fixed as of the current version — restoring now retries
+      until every row is back, and a page bug in the Maxient form that could
+      leave a newly added row invisible (stuck at zero opacity) is worked
+      around automatically. If you still see this, please
+      <a href="https://github.com/eliscalere/MAXISAVE/issues/new">open an issue</a>
+      with the version number from <code class="inline">chrome://extensions</code>.
+    </p>
+
+    <h3>A required field stayed red after I answered it</h3>
+    <p>
+      This was a bug in an earlier version, caused by the Clear button calling
+      the browser's native form reset, which silently wiped the underlying
+      value of radio and checkbox answers. It's fixed — Clear no longer resets
+      the form that way. Update to the latest version if you still see it.
+    </p>
+
+    <h3>Do attachments get saved?</h3>
+    <p>
+      Not unless you choose to. Attach a file and a card appears offering
+      to save it too; without opting in, you'll need to re-attach after a
+      refresh, and you'll get a confirmation prompt if you try to close the tab
+      with unsaved attachments staged.
+    </p>
+
+    <h3>How long is a draft kept?</h3>
+    <p>
+      Indefinitely, with one exception: drafts older than 14 days are discarded
+      automatically. A draft is also deleted the moment you press Submit or
+      Clear.
+    </p>
+
+    <h3>Is my data sent anywhere?</h3>
+    <p>
+      No. Maxisave makes no network requests. See the
+      <a href="privacy.html">privacy policy</a> for the full picture.
+    </p>
+  </section>
+
+  <section>
+    <h2>Still stuck?</h2>
+    <p>
+      Open a <a href="https://github.com/eliscalere/MAXISAVE/issues/new">GitHub issue</a>
+      and it'll get a response.
+    </p>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="credit">
+      <!-- TODO: swap in the real Scalere Design wordmark asset once supplied -->
+      <span class="wordmark-fallback">Scalere Design</span>
+    </div>
+    <div class="links">
+      <a href="index.html">Home</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/eliscalere/MAXISAVE">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
