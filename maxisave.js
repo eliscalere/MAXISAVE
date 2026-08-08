@@ -305,8 +305,14 @@
     clearTimeout(restoreTimer);
   }
 
+  // Restore fires synthetic input/change events to populate the form (see
+  // applyDraft). Those must not schedule a save — the values are already in
+  // storage, and reacting to them cuts the "Draft restored" message short by
+  // immediately overwriting it with "Saved". Only a real, trusted edit should
+  // count.
   function onUserEvent(e) {
-    if (e && e.isTrusted) markTouched();
+    if (!e || !e.isTrusted) return;
+    markTouched();
     scheduleSave();
   }
 

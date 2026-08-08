@@ -69,6 +69,21 @@ content script scoped to `https://cm.maxient.com/reportingform.php*`.
   row. It asks for confirmation first.
 - Deletes the draft when you press **Submit**.
 
+## The "Draft restored" message used to vanish almost instantly
+
+`applyDraft()` fills the form during restore by dispatching synthetic
+`input`/`change` events (so the page's own listeners react normally to each
+field). Those events were also picked up by autosave's own listener, which
+scheduled a save regardless of whether the event was a real edit — so restoring
+a draft immediately re-saved it, overwriting the "Draft restored from …"
+message well before its intended 6-second display. Measured on the live form:
+visible for ~700ms instead of 6000ms.
+
+Fixed by checking `event.isTrusted` before scheduling a save — restore's own
+synthetic events no longer count as edits, only ones the browser marks as
+originating from a real user action do. Re-measured after the fix: 5994ms,
+matching the intended window.
+
 ## The invisible-row bug (a page bug, fixed here)
 
 The page fades a newly added Involved Parties row in with jQuery, which drives

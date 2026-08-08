@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Maxisave",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Autosaves your Maxient report draft to this browser, restores it after a refresh, and clears it when you submit.",
   "minimum_chrome_version": "88",
   "icons": {
