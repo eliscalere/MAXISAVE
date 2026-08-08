@@ -132,7 +132,7 @@ landed — give it a minute after enabling before it resolves.
 | Asset | Required | Status |
 |---|---|---|
 | Store icon 128×128 | Yes | `icons/icon-128.png` ✅ |
-| Screenshot 1280×800 (or 640×400), 1–5 | Yes, at least 1 | **TODO — see below** |
+| Screenshot 1280×800, 1–5 | Yes, at least 1 | `store/screenshot-1-1280x800.png`, `store/screenshot-2-1280x800.png` ✅ |
 | Small promo tile 440×280 | No | `store/small-promo-440x280.png` ✅ |
 | Marquee 1400×560 | No | `store/marquee-1400x560.png` ✅ (only used if featured) |
 
@@ -140,15 +140,13 @@ Both promo tiles are generated from the real logo (`store/logo-transparent.png`)
 via `python3 store/make-promo.py`, flattened to RGB — Chrome rejects promo art
 with an alpha channel.
 
-**TODO: screenshots.** These have to be genuine captures of the extension
-running — a mocked-up listing image is grounds for rejection, and there's no
-way to generate one honestly. See [screenshots/README.md](../screenshots/README.md)
-for the exact steps. Short version:
+The two screenshots are genuine captures of the live form with the extension's
+real markup and fictional test data — see [screenshots/README.md](../screenshots/README.md)
+for how they were made. Up to 3 more can be added the same way:
 
 1. `Cmd+Shift+4`, then Space, then click the Chrome window.
-2. Take two or three: the status pill reading "Draft restored", the Involved
-   Parties rows restored, and the attachment opt-in card.
-3. Run them through the framer to get exact store dimensions:
+2. Capture whatever's missing — the Clear confirmation, a before/after pair, etc.
+3. Run it through the framer to get exact store dimensions:
 
 ```bash
 python3 store/frame-screenshot.py ~/Desktop/Screenshot*.png
