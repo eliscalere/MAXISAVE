@@ -194,76 +194,6 @@
     })();
   }
 
-  // -------------------------------------------------------- parties panel
-  // A live-updating summary of the Involved Parties rows, so you can see who's
-  // already listed while scrolling down to write the narrative — without
-  // physically moving Maxient's own section (different layouts and
-  // institutions share this template, per #involvedPersons below, but not
-  // necessarily its surrounding column structure, so repositioning it with
-  // CSS floats risks breaking a form this was never tested against; a
-  // separate panel that only reads data carries none of that risk).
-  //
-  // #involvedPersons is the element Maxient's OWN clone-form script targets to
-  // add/remove rows, so unlike a numbered section id (#section3, which shifts
-  // depending on how many sections precede it on a given layout) it is a
-  // stable anchor across different institutions and report types — confirmed
-  // identical on two unrelated Maxient forms.
-  function partiesAnchor() {
-    return document.getElementById('involvedPersons');
-  }
-
-  function partyRoleLabel(row) {
-    var sel = row.querySelector('[name="role[]"]');
-    if (!sel || sel.selectedIndex < 0) return '';
-    var opt = sel.options[sel.selectedIndex];
-    return opt ? opt.textContent.trim() : '';
-  }
-
-  function partyRows() {
-    var anchor = partiesAnchor();
-    if (!anchor) return [];
-    return Array.prototype.slice.call(anchor.querySelectorAll('.personrow'));
-  }
-
-  function updatePartiesPanel() {
-    if (!ui.partiesPanel) return;
-    var rows = partyRows();
-    var entries = [];
-    for (var i = 0; i < rows.length; i++) {
-      var nameEl = rows[i].querySelector('[name="person[]"]');
-      var name = nameEl ? nameEl.value.trim() : '';
-      if (!name) continue;
-      entries.push({ row: rows[i], name: name, role: partyRoleLabel(rows[i]) });
-    }
-
-    if (!entries.length) {
-      ui.partiesPanel.hidden = true;
-      return;
-    }
-
-    ui.partiesPanel.hidden = false;
-    ui.partiesList.innerHTML = '';
-    for (var j = 0; j < entries.length; j++) {
-      (function (entry, index) {
-        var item = document.createElement('button');
-        item.type = 'button';
-        item.className = 'mxa-party';
-        item.innerHTML =
-          '<span class="mxa-party-num">' + (index + 1) + '</span>' +
-          '<span class="mxa-party-name"></span>' +
-          (entry.role ? '<span class="mxa-party-role"></span>' : '');
-        item.querySelector('.mxa-party-name').textContent = entry.name;
-        if (entry.role) item.querySelector('.mxa-party-role').textContent = entry.role;
-        item.addEventListener('click', function () {
-          entry.row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          entry.row.classList.add('mxa-flash');
-          setTimeout(function () { entry.row.classList.remove('mxa-flash'); }, 900);
-        });
-        ui.partiesList.appendChild(item);
-      })(entries[j], j);
-    }
-  }
-
   // -------------------------------------------------- textarea readability
   // Maxient's long-form narrative questions render as a 5-row textarea by
   // default, cramped for the multi-paragraph incident descriptions this form
@@ -378,7 +308,6 @@
   function finishRestore() {
     normalizeRows();
     enhanceTextareas();
-    updatePartiesPanel();
     setStatus('restored', 'Draft restored from ' + timeLabel(draft.savedAt));
   }
 
@@ -427,7 +356,6 @@
     if (!e || !e.isTrusted) return;
     markTouched();
     scheduleSave();
-    updatePartiesPanel();
   }
 
   // ------------------------------------------------------------------- UI
@@ -478,16 +406,6 @@
       if (root.contains(e.target)) return;
       toggleSwitcher();
     }, true);
-
-    var panel = document.createElement('div');
-    panel.className = 'mxa-parties';
-    panel.hidden = true;
-    panel.innerHTML =
-      '<div class="mxa-parties-head">Involved Parties</div>' +
-      '<div class="mxa-parties-list"></div>';
-    document.body.appendChild(panel);
-    ui.partiesPanel = panel;
-    ui.partiesList = panel.querySelector('.mxa-parties-list');
   }
 
   var stateTimer = null;
@@ -536,7 +454,6 @@
       clearValidationState();
       normalizeRows();
       updateAttachmentNotice();
-      updatePartiesPanel();
       renderSwitcher();
       userTouched = false;
       ready = true;
@@ -874,7 +791,6 @@
       filesOptIn = false;   // the new slot has never opted in to saving files
 
       updateAttachmentNotice();
-      updatePartiesPanel();
       renderSwitcher();
       ready = true;
       setStatus('cleared', 'New report started');
@@ -894,7 +810,6 @@
       if (savedSlot) setSlot(savedSlot);
     } catch (e) { /* nothing to do */ }
 
-    updatePartiesPanel();
     renderSwitcher();
 
     // A draft parked by a previous submit means that submit went through
@@ -919,8 +834,6 @@
       if (id === 'btnAdd' || id === 'btnDel') {
         setTimeout(normalizeRows, 60);
         setTimeout(normalizeRows, 600);
-        setTimeout(updatePartiesPanel, 60);
-        setTimeout(updatePartiesPanel, 600);
       }
     }, true);
 

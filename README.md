@@ -68,8 +68,6 @@ content script scoped to `https://cm.maxient.com/reportingform.php*`.
   and removes the extra Involved Parties rows so you're back to a single blank
   row. It asks for confirmation first.
 - Deletes the draft when you press **Submit**.
-- A live **Involved Parties** panel in the corner mirrors whoever you've listed
-  so far — click a name to jump to that row.
 - Every institution and layout gets its own draft automatically; the **Saved**
   button next to Clear opens a list of all of them, with a delete per entry.
 - **New report** saves the one you're on and starts a fresh, empty one — for
@@ -92,11 +90,8 @@ Verified directly, not just by reading the code: the same `#IR` / `#involvedPers
 completely different Maxient forms — an anonymous public "Student Conduct
 Incident Report" and an authenticated "University Housing Staff Incident
 Report Form" behind ASU's SSO. That's Maxient's shared template, not an
-ASU-specific quirk, which is why the parties panel and textarea enhancement
-below key off `#involvedPersons` and "every textarea" rather than a numbered
-section id — a numbered id shifts depending on how many sections come before
-it on a given layout; `#involvedPersons` is what Maxient's *own* clone-row
-script depends on, so it's stable everywhere that script runs.
+ASU-specific quirk, which is why the textarea enhancement below targets "every
+textarea" generically rather than anything layout-specific.
 
 One layout (a login-gated staff form) couldn't be fully exercised end-to-end
 here — reaching it requires signing in as you, which this project won't do.
@@ -128,28 +123,22 @@ Drafts saved before v1.2.0 still work with no migration: the unslotted key
 (`institution:layout_id`, no trailing slot) is exactly what every draft
 already used, so it's just "the first report" now rather than "the only one."
 
-## Involved Parties panel and bigger textareas
+## Bigger textareas
 
-Two more additions, both intentionally *additive* rather than a redesign of
-Maxient's own layout:
+Every `<textarea>` on the page gets a taller default height (220px vs the
+~5-row default), a bigger line-height, and `resize: vertical`, so writing a
+multi-paragraph incident description doesn't mean scrolling inside a
+postage-stamp box. Applied generically to "every textarea" rather than
+anything layout-specific, for the same reason as everything else on this
+page: it has to hold up on forms this project has never seen.
 
-- A small panel in the corner lists whoever has a name filled in under
-  Involved Parties, live-updating as you type. Click an entry to smooth-scroll
-  to that row and give it a brief highlight. It hides itself when there's
-  nothing to show.
-- Every `<textarea>` on the page gets a taller default height (220px vs the
-  ~5-row default), a bigger line-height, and `resize: vertical`, so writing a
-  multi-paragraph incident description doesn't mean scrolling inside a
-  postage-stamp box.
-
-Both were built this way on purpose instead of physically moving Maxient's
-"Involved Parties" section into a sidebar with CSS floats or grid. Repositioning
-someone else's form risks breaking it in ways that are hard to predict across
-layouts this project can't test against (float-based reflows can overlap or
-misalign sibling sections that weren't built expecting a neighbor to go
-missing from the normal flow) — and unlike the parties panel and textarea
-sizing, that risk doesn't disappear just because the underlying selectors are
-generic. An overlay that only *reads* the DOM carries none of that risk.
+An earlier version of this also added a small panel that mirrored the
+Involved Parties rows in the corner, live-updating as you typed, as an
+additive alternative to physically repositioning Maxient's own section into a
+sidebar (which risks breaking layouts this project can't test against — see
+above). In practice its "live" update didn't reliably keep up with typing
+without a page refresh, which defeated the point, so it was pulled rather
+than left half-working.
 
 ## The "Draft restored" message used to vanish almost instantly
 

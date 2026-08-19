@@ -311,90 +311,6 @@
   background: #fdeaea;
 }
 
-/* --------------------------------------------------------- parties panel */
-
-.mxa-parties {
-  position: fixed;
-  top: 16px;
-  right: 18px;
-  z-index: 2147482999;
-  width: 230px;
-  max-height: 55vh;
-  overflow-y: auto;
-  background: #fff;
-  border-radius: var(--mxa-radius);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 4px 16px rgba(0, 0, 0, 0.4);
-  font-family: Proxima-nova, "Proxima Nova", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  animation: mxa-root-in 0.35s var(--mxa-ease);
-}
-
-.mxa-parties[hidden] { display: none; }
-
-.mxa-parties-head {
-  position: sticky;
-  top: 0;
-  padding: 9px 12px;
-  background: var(--mxa-maroon);
-  color: #fff;
-  font-weight: 700;
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  border-radius: var(--mxa-radius) var(--mxa-radius) 0 0;
-}
-
-.mxa-parties-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.mxa-party {
-  appearance: none;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  width: 100%;
-  border: 0;
-  border-bottom: 1px solid #f0f0f1;
-  background: #fff;
-  padding: 8px 12px;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  color: #191919;
-  transition: background-color 0.12s ease;
-}
-
-.mxa-party:last-child { border-bottom: 0; }
-
-.mxa-party:hover,
-.mxa-party:focus-visible {
-  background: #faf3f6;
-}
-
-.mxa-party-num {
-  flex: 0 0 auto;
-  color: #8c1d40;
-  font-weight: 700;
-  font-size: 12px;
-}
-
-.mxa-party-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 13px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mxa-party-role {
-  flex: 0 0 auto;
-  font-size: 11px;
-  color: #8a8a90;
-}
-
 /* ------------------------------------------------------- textarea sizing */
 
 textarea.mxa-textarea {
@@ -405,17 +321,6 @@ textarea.mxa-textarea {
   padding: 10px 12px;
 }
 
-/* --------------------------------------------------------------- flash */
-
-.personrow.mxa-flash {
-  animation: mxa-row-flash 0.9s ease;
-}
-
-@keyframes mxa-row-flash {
-  0%   { box-shadow: inset 0 0 0 2px #ffc627; }
-  100% { box-shadow: inset 0 0 0 2px rgba(255, 198, 39, 0); }
-}
-
 @media (max-width: 640px) {
   .mxa-root {
     right: 10px;
@@ -423,20 +328,12 @@ textarea.mxa-textarea {
     font-size: 12px;
   }
   .mxa-switcher-panel { width: 250px; }
-  .mxa-parties {
-    top: auto;
-    bottom: 60px;
-    right: 10px;
-    width: 190px;
-    max-height: 40vh;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .mxa-pill[data-state="saving"] .mxa-dot,
   .mxa-pill[data-state="restoring"] .mxa-dot,
   .mxa-pill[data-state="clearing"] .mxa-dot { animation: none; }
-  .personrow.mxa-flash { animation: none; }
-  .mxa-root, .mxa-parties { animation: none; }
+  .mxa-root { animation: none; }
   .mxa-switcher-panel { transition: none; }
 }

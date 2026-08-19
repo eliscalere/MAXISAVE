@@ -77,8 +77,6 @@ WHAT IT DOES
 • Filing more than one report on the same form? "New report" saves the
   current one and starts a fresh, empty one — switch back to any of them from
   the Saved list.
-• A live Involved Parties panel in the corner shows who's listed so far; click
-  a name to jump straight to that row.
 • Long-form narrative questions get a bigger, resizable text box instead of
   the default cramped one.
 
