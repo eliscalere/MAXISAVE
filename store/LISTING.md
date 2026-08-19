@@ -74,6 +74,9 @@ WHAT IT DOES
 • Works on any Maxient reporting form for any institution — each one keeps its
   own separate draft, and a "Saved" button lists everything you've got saved
   across all of them.
+• Filing more than one report on the same form? "New report" saves the
+  current one and starts a fresh, empty one — switch back to any of them from
+  the Saved list.
 • A live Involved Parties panel in the corner shows who's listed so far; click
   a name to jump straight to that row.
 • Long-form narrative questions get a bigger, resizable text box instead of

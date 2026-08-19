@@ -72,6 +72,9 @@ content script scoped to `https://cm.maxient.com/reportingform.php*`.
   so far — click a name to jump to that row.
 - Every institution and layout gets its own draft automatically; the **Saved**
   button next to Clear opens a list of all of them, with a delete per entry.
+- **New report** saves the one you're on and starts a fresh, empty one — for
+  when you're filing a second report on the same form. Both stay listed under
+  **Saved**, and clicking the non-active one there switches back to it.
 - Long-form narrative questions get a bigger, resizable textarea instead of
   the cramped 5-row default.
 
@@ -100,17 +103,30 @@ here — reaching it requires signing in as you, which this project won't do.
 The generic selectors above are the reason that's a minor gap rather than a
 real one: nothing about them assumes a specific layout.
 
-## Saved drafts switcher
+## Working on more than one report
 
-Every `institution:layout_id` pair already saved to its own key — that part
-was true from v1.0.0. What was missing was any way to *see* that. The
-**Saved** button next to Clear opens a small panel listing every draft found
-in this browser: which institution, which layout, when it was saved, and
-whether it's the one for the page you're currently on. Each has its own
-delete (×). There's no cross-form "load" action — restoring a Housing form's
-fields onto a Conduct form's layout wouldn't mean anything — this is purely
-for visibility and cleanup when you've got drafts sitting around for more
-than one form.
+Originally, `institution:layout_id` was the whole key — one draft per form.
+That's fine until you need to file two Student Conduct reports about two
+different incidents on the same day, and the second one starts overwriting
+the first as you type. v1.2.0 adds a slot to the key
+(`institution:layout_id:slot`) so more than one report can exist for the same
+form at once, and the **Saved** button next to Clear is how you move between
+them:
+
+- **New report** saves whatever's on screen, then clears the form and starts
+  a new, separate draft. The one you were just on doesn't go anywhere — it's
+  still there, still autosaving independently under its own slot.
+- The **Saved** panel lists every draft in this browser: institution, layout,
+  a preview (the reporter's name or first party listed, if there is one), and
+  when it was last saved. Entries for the *same* institution+layout as the
+  page you're on are clickable — click one to switch to it, which saves your
+  current report first, then swaps the visible form for that one.
+- Entries for a *different* form only offer delete, not switch — restoring a
+  Housing form's fields onto a Conduct form's layout wouldn't mean anything.
+
+Drafts saved before v1.2.0 still work with no migration: the unslotted key
+(`institution:layout_id`, no trailing slot) is exactly what every draft
+already used, so it's just "the first report" now rather than "the only one."
 
 ## Involved Parties panel and bigger textareas
 

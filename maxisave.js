@@ -34,9 +34,35 @@
   var params = new URLSearchParams(location.search);
   var institution = q('institution') || (location.search.replace('?', '').split('&')[0] || 'unknown');
   var layout = q('layout_id') || params.get('layout_id') || '0';
-  var KEY = 'maxient-autosave:' + institution + ':' + layout;
+  var BASE_KEY = 'maxient-autosave:' + institution + ':' + layout;
+  var ACTIVE_PTR = BASE_KEY + ':active';
+
+  // A slot lets more than one report for the same institution+layout coexist
+  // (two Student Conduct reports about two different incidents, say) without
+  // overwriting each other. The unslotted form (slot === null, key === BASE_KEY)
+  // is what every draft saved before v1.2.0 already used, so existing drafts
+  // keep working with no migration — a slot is only created when you press
+  // "New report".
+  var slot = null;
+  function keyForSlot(s) { return s ? BASE_KEY + ':' + s : BASE_KEY; }
+
+  var KEY = keyForSlot(slot);
   var PENDING_KEY = KEY + ':pending';
   var OPTIN_KEY = KEY + ':files';
+
+  // Reassigning these (not redeclaring) is what makes every function below
+  // that reads KEY/PENDING_KEY/OPTIN_KEY start acting on the new slot without
+  // needing to thread it through as a parameter everywhere.
+  function setSlot(s) {
+    slot = s;
+    KEY = keyForSlot(slot);
+    PENDING_KEY = KEY + ':pending';
+    OPTIN_KEY = KEY + ':files';
+    try {
+      if (slot) localStorage.setItem(ACTIVE_PTR, slot);
+      else localStorage.removeItem(ACTIVE_PTR);
+    } catch (e) { /* nothing to do */ }
+  }
 
   var DB_NAME = 'maxient-autosave';
   var STORE = 'attachments';
@@ -426,6 +452,7 @@
         '<button type="button" class="mxa-switcher-toggle" title="See drafts saved for other forms">' +
           'Saved <span class="mxa-switcher-count">0</span>' +
         '</button>' +
+        '<button type="button" class="mxa-new" title="Save this report and start a new, empty one">New report</button>' +
         '<button type="button" class="mxa-clear" title="Delete the saved draft and empty the form">Clear</button>' +
       '</div>';
     document.body.appendChild(root);
@@ -434,6 +461,7 @@
     ui.pill = root.querySelector('.mxa-pill');
     ui.label = root.querySelector('.mxa-label');
     ui.clear = root.querySelector('.mxa-clear');
+    ui.newBtn = root.querySelector('.mxa-new');
     ui.notice = root.querySelector('.mxa-notice');
     ui.noticeText = root.querySelector('.mxa-notice-text');
     ui.noticeBtn = root.querySelector('.mxa-notice-btn');
@@ -442,6 +470,7 @@
     ui.switcherPanel = root.querySelector('.mxa-switcher-panel');
     ui.switcherList = root.querySelector('.mxa-switcher-list');
     ui.clear.addEventListener('click', clearDraft);
+    ui.newBtn.addEventListener('click', newReport);
     ui.noticeBtn.addEventListener('click', toggleAttachments);
     ui.switcherToggle.addEventListener('click', toggleSwitcher);
 
@@ -664,20 +693,44 @@
   }
 
   // -------------------------------------------------------------- switcher
-  // Every institution+layout combination already saves to its own key (see
-  // KEY above) — this just makes that visible. A key is a real draft only
-  // when it has exactly three ':'-separated parts; ':pending' and ':files'
-  // suffixes add a fourth.
+  // Every institution+layout+slot combination saves to its own key (see KEY
+  // above) — this makes that visible and, for other drafts of the same form,
+  // switchable. A key is a real draft when it has 3 parts (institution+layout,
+  // the unslotted default) or 4 (institution+layout+slot); ':pending' and
+  // ':files' suffixes add one more part each, so they're excluded by their
+  // literal last segment rather than by part count — a slot id could in
+  // principle be any string, but this code only ever generates ones starting
+  // with 't', so a collision isn't a real risk.
+  function draftPreview(fields) {
+    var candidates = ['reporters_full_name#0', 'person[]#0'];
+    for (var i = 0; i < candidates.length; i++) {
+      var v = fields[candidates[i]];
+      if (v) return v;
+    }
+    return null;
+  }
+
   function listDrafts() {
     var out = [];
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
       if (!k || k.indexOf(KEY_PREFIX) !== 0) continue;
       var parts = k.split(':');
-      if (parts.length !== 3) continue;
+      var last = parts[parts.length - 1];
+      if (last === 'pending' || last === 'files') continue;
+      if (parts.length !== 3 && parts.length !== 4) continue;
       var d = read(k);
       if (!d) continue;
-      out.push({ key: k, institution: parts[1], layout: parts[2], savedAt: d.savedAt || 0, isCurrent: k === KEY });
+      out.push({
+        key: k,
+        institution: parts[1],
+        layout: parts[2],
+        slot: parts.length === 4 ? parts[3] : null,
+        savedAt: d.savedAt || 0,
+        preview: draftPreview(d.fields || {}),
+        isCurrent: k === KEY,
+        sameForm: parts[1] === institution && parts[2] === layout
+      });
     }
     out.sort(function (a, b) { return b.savedAt - a.savedAt; });
     return out;
@@ -685,6 +738,39 @@
 
   function dateLabel(ts) {
     return new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + timeLabel(ts);
+  }
+
+  function switchToDraft(d) {
+    if (d.isCurrent) return;
+    saveNow();   // flush whatever's on screen under the current slot first
+    clearTimeout(saveTimer);
+    clearTimeout(restoreTimer);
+    userTouched = false;
+    ready = false;
+    setStatus('restoring');
+
+    clearFields();
+    resetRows(function () {
+      clearFields();
+      repairChoiceValues();
+      clearValidationState();
+      normalizeRows();
+
+      setSlot(d.slot);
+      draft = read(KEY);
+      try { filesOptIn = !!localStorage.getItem(OPTIN_KEY); } catch (e) { filesOptIn = false; }
+      ready = true;
+      updateAttachmentNotice();
+      renderSwitcher();
+
+      if (draft) {
+        restoreStart = Date.now();
+        restoreTick(0);
+        if (filesOptIn) restoreAttachments();
+      } else {
+        setStatus('idle');
+      }
+    });
   }
 
   function renderSwitcher() {
@@ -709,9 +795,16 @@
 
         var info = document.createElement('div');
         info.className = 'mxa-switcher-info';
+        if (d.sameForm && !d.isCurrent) {
+          info.classList.add('mxa-switcher-clickable');
+          info.title = 'Switch to this report';
+          info.addEventListener('click', function () { switchToDraft(d); });
+        }
         var top = document.createElement('div');
         top.className = 'mxa-switcher-inst';
-        top.textContent = d.institution + ' · layout ' + d.layout + (d.isCurrent ? ' (this page)' : '');
+        var label = d.institution + ' · layout ' + d.layout;
+        if (d.preview) label += ' — ' + d.preview;
+        top.textContent = label + (d.isCurrent ? ' (this page)' : '');
         var bottom = document.createElement('div');
         bottom.className = 'mxa-switcher-time';
         bottom.textContent = 'Saved ' + dateLabel(d.savedAt);
@@ -723,7 +816,8 @@
         del.className = 'mxa-switcher-del';
         del.title = 'Delete this draft';
         del.textContent = '×';
-        del.addEventListener('click', function () {
+        del.addEventListener('click', function (e) {
+          e.stopPropagation();
           if (!window.confirm('Delete the saved draft for ' + d.institution + ' (layout ' + d.layout + ')?')) return;
           drop(d.key);
           drop(d.key + ':pending');
@@ -748,11 +842,50 @@
     if (open) renderSwitcher();
   }
 
+  // Saves whatever's on screen under the current slot, then starts a fresh,
+  // separate one — so a second report for the same institution+layout (a
+  // different incident on the same form) doesn't overwrite the first.
+  function newReport() {
+    if (!window.confirm('Save this report and start a new, empty one?\n\nThe current report stays saved — switch back to it anytime from Saved.')) return;
+    saveNow();
+    clearTimeout(saveTimer);
+    clearTimeout(restoreTimer);
+    userTouched = false;
+    ready = false;
+    setStatus('clearing');
+
+    clearFields();
+    resetRows(function () {
+      clearFields();
+      repairChoiceValues();
+      clearValidationState();
+      normalizeRows();
+
+      setSlot('t' + Date.now().toString(36));
+      draft = null;
+      filesOptIn = false;   // the new slot has never opted in to saving files
+
+      updateAttachmentNotice();
+      updatePartiesPanel();
+      renderSwitcher();
+      ready = true;
+      setStatus('cleared', 'New report started');
+    });
+  }
+
   // -------------------------------------------------------------- lifecycle
   function init() {
     buildUI();
     snapshotChoiceValues();   // before anything can blank them
     enhanceTextareas();
+
+    // Pick up wherever "New report" or "Switch to this report" last left off
+    // for this institution+layout, before anything reads KEY.
+    try {
+      var savedSlot = localStorage.getItem(ACTIVE_PTR);
+      if (savedSlot) setSlot(savedSlot);
+    } catch (e) { /* nothing to do */ }
+
     updatePartiesPanel();
     renderSwitcher();
 

@@ -138,6 +138,25 @@
   outline-offset: -4px;
 }
 
+.mxa-new {
+  appearance: none;
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+  margin: 0;
+  padding: 9px 12px;
+  background: #8c1d40;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mxa-new:hover,
+.mxa-new:focus-visible {
+  background: #9c2249;
+}
+
 /* -------------------------------------------------------------- switcher */
 
 .mxa-switcher-toggle {
@@ -218,6 +237,17 @@
 }
 
 .mxa-switcher-info { flex: 1 1 auto; min-width: 0; }
+
+.mxa-switcher-info.mxa-switcher-clickable {
+  cursor: pointer;
+  border-radius: 4px;
+  margin: -4px -6px;
+  padding: 4px 6px;
+}
+
+.mxa-switcher-info.mxa-switcher-clickable:hover {
+  background: #f2f2f4;
+}
 
 .mxa-switcher-inst {
   font-weight: 600;
