@@ -68,6 +68,72 @@ content script scoped to `https://cm.maxient.com/reportingform.php*`.
   and removes the extra Involved Parties rows so you're back to a single blank
   row. It asks for confirmation first.
 - Deletes the draft when you press **Submit**.
+- A live **Involved Parties** panel in the corner mirrors whoever you've listed
+  so far — click a name to jump to that row.
+- Every institution and layout gets its own draft automatically; the **Saved**
+  button next to Clear opens a list of all of them, with a delete per entry.
+- Long-form narrative questions get a bigger, resizable textarea instead of
+  the cramped 5-row default.
+
+## Works on every Maxient form, not just this one
+
+The content script matches `cm.maxient.com/reportingform.php*` — the whole
+path, any query string — and the storage key is built from the `institution`
+and `layout_id` hidden fields the page itself sends, not from anything
+hardcoded. That part was already true before v1.1.0; what's new is making it
+*visible* and extending the UI additions to work the same way regardless of
+which form you're on.
+
+Verified directly, not just by reading the code: the same `#IR` / `#involvedPersons`
+/ `#section3` / `#btnAdd` / `#btnDel` structure showed up identically on two
+completely different Maxient forms — an anonymous public "Student Conduct
+Incident Report" and an authenticated "University Housing Staff Incident
+Report Form" behind ASU's SSO. That's Maxient's shared template, not an
+ASU-specific quirk, which is why the parties panel and textarea enhancement
+below key off `#involvedPersons` and "every textarea" rather than a numbered
+section id — a numbered id shifts depending on how many sections come before
+it on a given layout; `#involvedPersons` is what Maxient's *own* clone-row
+script depends on, so it's stable everywhere that script runs.
+
+One layout (a login-gated staff form) couldn't be fully exercised end-to-end
+here — reaching it requires signing in as you, which this project won't do.
+The generic selectors above are the reason that's a minor gap rather than a
+real one: nothing about them assumes a specific layout.
+
+## Saved drafts switcher
+
+Every `institution:layout_id` pair already saved to its own key — that part
+was true from v1.0.0. What was missing was any way to *see* that. The
+**Saved** button next to Clear opens a small panel listing every draft found
+in this browser: which institution, which layout, when it was saved, and
+whether it's the one for the page you're currently on. Each has its own
+delete (×). There's no cross-form "load" action — restoring a Housing form's
+fields onto a Conduct form's layout wouldn't mean anything — this is purely
+for visibility and cleanup when you've got drafts sitting around for more
+than one form.
+
+## Involved Parties panel and bigger textareas
+
+Two more additions, both intentionally *additive* rather than a redesign of
+Maxient's own layout:
+
+- A small panel in the corner lists whoever has a name filled in under
+  Involved Parties, live-updating as you type. Click an entry to smooth-scroll
+  to that row and give it a brief highlight. It hides itself when there's
+  nothing to show.
+- Every `<textarea>` on the page gets a taller default height (220px vs the
+  ~5-row default), a bigger line-height, and `resize: vertical`, so writing a
+  multi-paragraph incident description doesn't mean scrolling inside a
+  postage-stamp box.
+
+Both were built this way on purpose instead of physically moving Maxient's
+"Involved Parties" section into a sidebar with CSS floats or grid. Repositioning
+someone else's form risks breaking it in ways that are hard to predict across
+layouts this project can't test against (float-based reflows can overlap or
+misalign sibling sections that weren't built expecting a neighbor to go
+missing from the normal flow) — and unlike the parties panel and textarea
+sizing, that risk doesn't disappear just because the underlying selectors are
+generic. An overlay that only *reads* the DOM carries none of that risk.
 
 ## The "Draft restored" message used to vanish almost instantly
 

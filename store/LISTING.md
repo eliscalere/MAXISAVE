@@ -71,6 +71,13 @@ WHAT IT DOES
 • Deletes the draft automatically when you press Submit.
 • Attachments are opt-in. Staged files are not saved unless you choose to keep
   them, and you are warned before closing the tab with unsaved attachments.
+• Works on any Maxient reporting form for any institution — each one keeps its
+  own separate draft, and a "Saved" button lists everything you've got saved
+  across all of them.
+• A live Involved Parties panel in the corner shows who's listed so far; click
+  a name to jump straight to that row.
+• Long-form narrative questions get a bigger, resizable text box instead of
+  the default cramped one.
 
 YOUR DATA STAYS ON YOUR COMPUTER
 

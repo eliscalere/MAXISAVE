@@ -138,11 +138,236 @@
   outline-offset: -4px;
 }
 
+/* -------------------------------------------------------------- switcher */
+
+.mxa-switcher-toggle {
+  appearance: none;
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+  margin: 0;
+  padding: 9px 12px;
+  background: #6e1633;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mxa-switcher-toggle:hover,
+.mxa-switcher-toggle:focus-visible {
+  background: #7d1b3a;
+}
+
+.mxa-switcher-count {
+  display: inline-block;
+  min-width: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+}
+
+.mxa-switcher-panel {
+  width: 300px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #fff;
+  color: #191919;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  margin-bottom: 4px;
+}
+
+.mxa-switcher-panel[hidden] { display: none; }
+
+.mxa-switcher-head {
+  position: sticky;
+  top: 0;
+  padding: 10px 14px;
+  background: #f7f7f8;
+  border-bottom: 1px solid #e6e6e8;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5a5a5f;
+}
+
+.mxa-switcher-empty {
+  padding: 16px 14px;
+  color: #7a7a80;
+  font-size: 13px;
+}
+
+.mxa-switcher-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+.mxa-switcher-row:last-child { border-bottom: 0; }
+
+.mxa-switcher-row.mxa-switcher-current {
+  background: #fff9e8;
+}
+
+.mxa-switcher-info { flex: 1 1 auto; min-width: 0; }
+
+.mxa-switcher-inst {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mxa-switcher-time {
+  font-size: 11.5px;
+  color: #8a8a90;
+  margin-top: 1px;
+}
+
+.mxa-switcher-del {
+  appearance: none;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #b0202f;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mxa-switcher-del:hover,
+.mxa-switcher-del:focus-visible {
+  background: #fdeaea;
+}
+
+/* --------------------------------------------------------- parties panel */
+
+.mxa-parties {
+  position: fixed;
+  top: 16px;
+  right: 18px;
+  z-index: 2147482999;
+  width: 230px;
+  max-height: 55vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 3px 14px rgba(0, 0, 0, 0.35);
+  font-family: Proxima-nova, "Proxima Nova", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.mxa-parties[hidden] { display: none; }
+
+.mxa-parties-head {
+  position: sticky;
+  top: 0;
+  padding: 9px 12px;
+  background: #8c1d40;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  border-radius: 8px 8px 0 0;
+}
+
+.mxa-parties-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.mxa-party {
+  appearance: none;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #f0f0f1;
+  background: #fff;
+  padding: 8px 12px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: #191919;
+}
+
+.mxa-party:last-child { border-bottom: 0; }
+
+.mxa-party:hover,
+.mxa-party:focus-visible {
+  background: #faf3f6;
+}
+
+.mxa-party-num {
+  flex: 0 0 auto;
+  color: #8c1d40;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.mxa-party-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mxa-party-role {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: #8a8a90;
+}
+
+/* ------------------------------------------------------- textarea sizing */
+
+textarea.mxa-textarea {
+  min-height: 220px !important;
+  resize: vertical;
+  line-height: 1.55;
+  font-size: 14.5px;
+  padding: 10px 12px;
+}
+
+/* --------------------------------------------------------------- flash */
+
+.personrow.mxa-flash {
+  animation: mxa-row-flash 0.9s ease;
+}
+
+@keyframes mxa-row-flash {
+  0%   { box-shadow: inset 0 0 0 2px #ffc627; }
+  100% { box-shadow: inset 0 0 0 2px rgba(255, 198, 39, 0); }
+}
+
 @media (max-width: 640px) {
   .mxa-root {
     right: 10px;
     bottom: 10px;
     font-size: 12px;
+  }
+  .mxa-switcher-panel { width: 250px; }
+  .mxa-parties {
+    top: auto;
+    bottom: 60px;
+    right: 10px;
+    width: 190px;
+    max-height: 40vh;
   }
 }
 
@@ -150,4 +375,5 @@
   .mxa-pill[data-state="saving"] .mxa-dot,
   .mxa-pill[data-state="restoring"] .mxa-dot,
   .mxa-pill[data-state="clearing"] .mxa-dot { animation: none; }
+  .personrow.mxa-flash { animation: none; }
 }

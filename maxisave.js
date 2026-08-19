@@ -40,6 +40,7 @@
 
   var DB_NAME = 'maxient-autosave';
   var STORE = 'attachments';
+  var KEY_PREFIX = 'maxient-autosave:';
 
   var draft = null;        // the draft currently being restored, if any
   var ready = false;       // gates all writes
@@ -167,6 +168,89 @@
     })();
   }
 
+  // -------------------------------------------------------- parties panel
+  // A live-updating summary of the Involved Parties rows, so you can see who's
+  // already listed while scrolling down to write the narrative — without
+  // physically moving Maxient's own section (different layouts and
+  // institutions share this template, per #involvedPersons below, but not
+  // necessarily its surrounding column structure, so repositioning it with
+  // CSS floats risks breaking a form this was never tested against; a
+  // separate panel that only reads data carries none of that risk).
+  //
+  // #involvedPersons is the element Maxient's OWN clone-form script targets to
+  // add/remove rows, so unlike a numbered section id (#section3, which shifts
+  // depending on how many sections precede it on a given layout) it is a
+  // stable anchor across different institutions and report types — confirmed
+  // identical on two unrelated Maxient forms.
+  function partiesAnchor() {
+    return document.getElementById('involvedPersons');
+  }
+
+  function partyRoleLabel(row) {
+    var sel = row.querySelector('[name="role[]"]');
+    if (!sel || sel.selectedIndex < 0) return '';
+    var opt = sel.options[sel.selectedIndex];
+    return opt ? opt.textContent.trim() : '';
+  }
+
+  function partyRows() {
+    var anchor = partiesAnchor();
+    if (!anchor) return [];
+    return Array.prototype.slice.call(anchor.querySelectorAll('.personrow'));
+  }
+
+  function updatePartiesPanel() {
+    if (!ui.partiesPanel) return;
+    var rows = partyRows();
+    var entries = [];
+    for (var i = 0; i < rows.length; i++) {
+      var nameEl = rows[i].querySelector('[name="person[]"]');
+      var name = nameEl ? nameEl.value.trim() : '';
+      if (!name) continue;
+      entries.push({ row: rows[i], name: name, role: partyRoleLabel(rows[i]) });
+    }
+
+    if (!entries.length) {
+      ui.partiesPanel.hidden = true;
+      return;
+    }
+
+    ui.partiesPanel.hidden = false;
+    ui.partiesList.innerHTML = '';
+    for (var j = 0; j < entries.length; j++) {
+      (function (entry, index) {
+        var item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'mxa-party';
+        item.innerHTML =
+          '<span class="mxa-party-num">' + (index + 1) + '</span>' +
+          '<span class="mxa-party-name"></span>' +
+          (entry.role ? '<span class="mxa-party-role"></span>' : '');
+        item.querySelector('.mxa-party-name').textContent = entry.name;
+        if (entry.role) item.querySelector('.mxa-party-role').textContent = entry.role;
+        item.addEventListener('click', function () {
+          entry.row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          entry.row.classList.add('mxa-flash');
+          setTimeout(function () { entry.row.classList.remove('mxa-flash'); }, 900);
+        });
+        ui.partiesList.appendChild(item);
+      })(entries[j], j);
+    }
+  }
+
+  // -------------------------------------------------- textarea readability
+  // Maxient's long-form narrative questions render as a 5-row textarea by
+  // default, cramped for the multi-paragraph incident descriptions this form
+  // asks for. Enhancing every textarea found is layout-agnostic by
+  // construction: it doesn't depend on which section a given question lives
+  // in or how many there are, only that it's a textarea.
+  function enhanceTextareas() {
+    var areas = FORM.querySelectorAll('textarea');
+    for (var i = 0; i < areas.length; i++) {
+      areas[i].classList.add('mxa-textarea');
+    }
+  }
+
   // ------------------------------------------------------------- restoring
   function hasOption(select, value) {
     for (var i = 0; i < select.options.length; i++) {
@@ -267,6 +351,8 @@
 
   function finishRestore() {
     normalizeRows();
+    enhanceTextareas();
+    updatePartiesPanel();
     setStatus('restored', 'Draft restored from ' + timeLabel(draft.savedAt));
   }
 
@@ -288,6 +374,7 @@
 
     var ok = write(KEY, { savedAt: Date.now(), version: 1, fields: fields });
     setStatus(ok ? 'saved' : 'error');
+    if (ok) renderSwitcher();
   }
 
   function scheduleSave() {
@@ -314,6 +401,7 @@
     if (!e || !e.isTrusted) return;
     markTouched();
     scheduleSave();
+    updatePartiesPanel();
   }
 
   // ------------------------------------------------------------------- UI
@@ -327,10 +415,17 @@
         '<span class="mxa-notice-text"></span>' +
         '<button type="button" class="mxa-notice-btn"></button>' +
       '</div>' +
+      '<div class="mxa-switcher-panel" hidden>' +
+        '<div class="mxa-switcher-head">Saved drafts</div>' +
+        '<div class="mxa-switcher-list"></div>' +
+      '</div>' +
       '<div class="mxa-bar">' +
         '<div class="mxa-pill" role="status" aria-live="polite">' +
           '<span class="mxa-dot"></span><span class="mxa-label">Autosave on</span>' +
         '</div>' +
+        '<button type="button" class="mxa-switcher-toggle" title="See drafts saved for other forms">' +
+          'Saved <span class="mxa-switcher-count">0</span>' +
+        '</button>' +
         '<button type="button" class="mxa-clear" title="Delete the saved draft and empty the form">Clear</button>' +
       '</div>';
     document.body.appendChild(root);
@@ -342,8 +437,23 @@
     ui.notice = root.querySelector('.mxa-notice');
     ui.noticeText = root.querySelector('.mxa-notice-text');
     ui.noticeBtn = root.querySelector('.mxa-notice-btn');
+    ui.switcherToggle = root.querySelector('.mxa-switcher-toggle');
+    ui.switcherCount = root.querySelector('.mxa-switcher-count');
+    ui.switcherPanel = root.querySelector('.mxa-switcher-panel');
+    ui.switcherList = root.querySelector('.mxa-switcher-list');
     ui.clear.addEventListener('click', clearDraft);
     ui.noticeBtn.addEventListener('click', toggleAttachments);
+    ui.switcherToggle.addEventListener('click', toggleSwitcher);
+
+    var panel = document.createElement('div');
+    panel.className = 'mxa-parties';
+    panel.hidden = true;
+    panel.innerHTML =
+      '<div class="mxa-parties-head">Involved Parties</div>' +
+      '<div class="mxa-parties-list"></div>';
+    document.body.appendChild(panel);
+    ui.partiesPanel = panel;
+    ui.partiesList = panel.querySelector('.mxa-parties-list');
   }
 
   var stateTimer = null;
@@ -392,6 +502,8 @@
       clearValidationState();
       normalizeRows();
       updateAttachmentNotice();
+      updatePartiesPanel();
+      renderSwitcher();
       userTouched = false;
       ready = true;
       setStatus('cleared');
@@ -551,10 +663,98 @@
     ui.noticeBtn.textContent = filesOptIn ? 'Stop saving' : 'Save them too';
   }
 
+  // -------------------------------------------------------------- switcher
+  // Every institution+layout combination already saves to its own key (see
+  // KEY above) — this just makes that visible. A key is a real draft only
+  // when it has exactly three ':'-separated parts; ':pending' and ':files'
+  // suffixes add a fourth.
+  function listDrafts() {
+    var out = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf(KEY_PREFIX) !== 0) continue;
+      var parts = k.split(':');
+      if (parts.length !== 3) continue;
+      var d = read(k);
+      if (!d) continue;
+      out.push({ key: k, institution: parts[1], layout: parts[2], savedAt: d.savedAt || 0, isCurrent: k === KEY });
+    }
+    out.sort(function (a, b) { return b.savedAt - a.savedAt; });
+    return out;
+  }
+
+  function dateLabel(ts) {
+    return new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + timeLabel(ts);
+  }
+
+  function renderSwitcher() {
+    if (!ui.switcherList) return;
+    var drafts = listDrafts();
+    ui.switcherCount.textContent = String(drafts.length);
+    ui.switcherList.innerHTML = '';
+
+    if (!drafts.length) {
+      var empty = document.createElement('div');
+      empty.className = 'mxa-switcher-empty';
+      empty.textContent = 'No saved drafts yet.';
+      ui.switcherList.appendChild(empty);
+      return;
+    }
+
+    for (var i = 0; i < drafts.length; i++) {
+      (function (d) {
+        var row = document.createElement('div');
+        row.className = 'mxa-switcher-row';
+        if (d.isCurrent) row.classList.add('mxa-switcher-current');
+
+        var info = document.createElement('div');
+        info.className = 'mxa-switcher-info';
+        var top = document.createElement('div');
+        top.className = 'mxa-switcher-inst';
+        top.textContent = d.institution + ' · layout ' + d.layout + (d.isCurrent ? ' (this page)' : '');
+        var bottom = document.createElement('div');
+        bottom.className = 'mxa-switcher-time';
+        bottom.textContent = 'Saved ' + dateLabel(d.savedAt);
+        info.appendChild(top);
+        info.appendChild(bottom);
+
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'mxa-switcher-del';
+        del.title = 'Delete this draft';
+        del.textContent = '×';
+        del.addEventListener('click', function () {
+          if (!window.confirm('Delete the saved draft for ' + d.institution + ' (layout ' + d.layout + ')?')) return;
+          drop(d.key);
+          drop(d.key + ':pending');
+          drop(d.key + ':files');
+          if (d.isCurrent) {
+            draft = null;
+            updateAttachmentNotice();
+          }
+          renderSwitcher();
+        });
+
+        row.appendChild(info);
+        row.appendChild(del);
+        ui.switcherList.appendChild(row);
+      })(drafts[i]);
+    }
+  }
+
+  function toggleSwitcher() {
+    var open = ui.switcherPanel.hidden;
+    ui.switcherPanel.hidden = !open;
+    if (open) renderSwitcher();
+  }
+
   // -------------------------------------------------------------- lifecycle
   function init() {
     buildUI();
     snapshotChoiceValues();   // before anything can blank them
+    enhanceTextareas();
+    updatePartiesPanel();
+    renderSwitcher();
 
     // A draft parked by a previous submit means that submit went through
     // (or the user navigated away) — this is a fresh form, so let it go.
@@ -578,6 +778,8 @@
       if (id === 'btnAdd' || id === 'btnDel') {
         setTimeout(normalizeRows, 60);
         setTimeout(normalizeRows, 600);
+        setTimeout(updatePartiesPanel, 60);
+        setTimeout(updatePartiesPanel, 600);
       }
     }, true);
 
@@ -606,6 +808,7 @@
       normalizeRows();
       repairChoiceValues();
       saveNow();
+      renderSwitcher();
     }, BACKSTOP_INTERVAL);
 
     // Submit: park the draft, then delete it. If the page is still here after
@@ -622,6 +825,7 @@
       }
       clearAttachmentStore();   // the files are still in the input if this fails
       setStatus('cleared', 'Submitting — draft cleared');
+      renderSwitcher();
 
       setTimeout(function () {
         if (unloading) return;
@@ -633,6 +837,7 @@
         if (filesOptIn) saveAttachments();
         submitted = false;
         setStatus('saved');
+        renderSwitcher();
       }, SUBMIT_GRACE);
     }, true);
 
