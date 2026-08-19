@@ -9,8 +9,12 @@
 (function () {
   'use strict';
 
+  // FORM is looked up early but not required yet — the report-history capture
+  // below has to run on the confirmation page too, and that page (a real
+  // server response after a successful POST, not a client-side transition)
+  // has no #IR on it. Everything past the history block requires a form and
+  // returns early if there isn't one.
   var FORM = document.getElementById('IR') || document.forms[0];
-  if (!FORM) return;
 
   // ---------------------------------------------------------------- config
   var SAVE_DELAY = 700;          // ms of idle typing before a save
@@ -21,6 +25,13 @@
   var ROW_ANIM = 220;            // ms; removing a row is animated and ignores clicks
   var ROW_SETTLE = 120;          // ms to let an added row settle before the next
   var RESTORE_DEADLINE = 20000;  // ms; give up re-trying the restore after this
+  // Oldest entries drop once history exceeds this. Kept conservative because
+  // each entry carries a full field snapshot: the stress test in the README
+  // measured a worst-case draft (30 parties, a 9,600-word narrative) at
+  // 64.3KB. 50 entries at that worst case is 3.2MB, ~64% of the 5MB origin
+  // quota — real reports run far smaller, but the cap has to hold even if
+  // every single one doesn't.
+  var MAX_HISTORY = 50;
 
   // Never persisted: session tokens, uploads, and the browser's own buttons.
   var SKIP_TYPES = {
@@ -28,7 +39,7 @@
   };
 
   function q(name) {
-    var el = FORM.querySelector('input[name="' + name + '"]');
+    var el = FORM && FORM.querySelector('input[name="' + name + '"]');
     return el ? el.value : '';
   }
   var params = new URLSearchParams(location.search);
@@ -36,6 +47,7 @@
   var layout = q('layout_id') || params.get('layout_id') || '0';
   var BASE_KEY = 'maxient-autosave:' + institution + ':' + layout;
   var ACTIVE_PTR = BASE_KEY + ':active';
+  var HISTORY_KEY = 'maxient-autosave:history';
 
   // A slot lets more than one report for the same institution+layout coexist
   // (two Student Conduct reports about two different incidents, say) without
@@ -63,6 +75,108 @@
       else localStorage.removeItem(ACTIVE_PTR);
     } catch (e) { /* nothing to do */ }
   }
+
+  // ---------------------------------------------------- submission history
+  // The form POSTs back to this exact URL (verified: FORM.action === the page
+  // it's already on), so whatever Maxient serves after a real submission —
+  // success or validation error — loads under this same content script match,
+  // with no manifest change needed. That response is a real server render,
+  // not a client-side transition, so #IR being *absent* is the signal a
+  // submission actually went through rather than being blocked.
+  //
+  // The report-number pattern below is an unverified best-effort guess, not
+  // matched against a real confirmation page — this project can't safely
+  // trigger one to check (that means filing a real report). Regardless of
+  // whether a number is found, the submission is still archived with
+  // whatever field snapshot was pending, so "did this go through, and what
+  // did I write" survives even if the number extraction misses.
+  // A single regex combining "find the label" and "find the code" fails on
+  // ordinary phrasing like "report number is R-2026-004821" — the label and
+  // the code aren't adjacent, there's a connector word between them. Doing
+  // it in two steps is more robust: find where a label phrase occurs
+  // (case-insensitively), then look at what follows it for the first token
+  // that actually looks like a code — has a digit, and is uppercase/hyphenated
+  // rather than an ordinary lowercase word — within a short distance so it
+  // doesn't wander into unrelated text.
+  // \b only after "number" — a trailing \b after "#" or "no." never matches
+  // (a word boundary needs a word char on one side; "#:" or "#" at the end of
+  // a sentence are non-word on both sides), which silently broke "Reference #:".
+  var REPORT_LABELS = /\b(?:report|reference|confirmation|tracking|case|incident)\s*(?:number\b|no\.?|#)/gi;
+  var CODE_TOKEN = /\b([A-Z0-9][A-Z0-9\-]{3,})\b/;   // no /i — must look like a code, not a word
+  var BARE_HASH = /#\s*(\d{5,})\b/;                  // a lone "#123456" with no label at all
+
+  function findReportNumber() {
+    var text = document.body ? document.body.innerText : '';
+    var label;
+    while ((label = REPORT_LABELS.exec(text))) {
+      var after = text.slice(label.index + label[0].length, label.index + label[0].length + 40);
+      var code = after.match(CODE_TOKEN);
+      if (code) return code[1];
+    }
+    var bare = text.match(BARE_HASH);
+    return bare ? bare[1] : null;
+  }
+
+  function readHistory() {
+    try {
+      var raw = localStorage.getItem(HISTORY_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+
+  function writeHistory(list) {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch (e) { /* nothing to do */ }
+  }
+
+  function archiveSubmission(fields) {
+    var list = readHistory();
+    list.unshift({
+      submittedAt: Date.now(),
+      institution: institution,
+      layout: layout,
+      reportNumber: findReportNumber(),
+      fields: fields
+    });
+    if (list.length > MAX_HISTORY) list.length = MAX_HISTORY;
+    writeHistory(list);
+  }
+
+  // Runs on every load, before anything else, independent of whether this
+  // page has a form on it at all.
+  (function checkForPendingSubmission() {
+    try {
+      var savedSlot = localStorage.getItem(ACTIVE_PTR);
+      if (savedSlot) setSlot(savedSlot);
+    } catch (e) { /* nothing to do */ }
+
+    var parkedRaw;
+    try { parkedRaw = localStorage.getItem(PENDING_KEY); } catch (e) { parkedRaw = null; }
+    if (!parkedRaw) return;
+
+    var parked;
+    try { parked = JSON.parse(parkedRaw); } catch (e) { parked = null; }
+
+    var stillOnForm = !!(document.getElementById('IR') || document.forms[0]);
+    if (stillOnForm) {
+      // No #IR at all would mean a real submission; #IR being back means this
+      // is Maxient re-rendering the same form (usually with validation
+      // errors) rather than a success page. Put the draft back so nothing
+      // written is lost — this is the same recovery the submit handler's own
+      // timeout does when the page never navigates away at all, covering the
+      // case where it does.
+      try {
+        if (parkedRaw) localStorage.setItem(KEY, parkedRaw);
+        localStorage.removeItem(PENDING_KEY);
+      } catch (e) { /* nothing to do */ }
+      return;
+    }
+
+    if (parked && parked.fields) archiveSubmission(parked.fields);
+    try { localStorage.removeItem(PENDING_KEY); } catch (e) { /* nothing to do */ }
+  })();
+
+  if (!FORM) return;
 
   var DB_NAME = 'maxient-autosave';
   var STORE = 'attachments';
@@ -370,8 +484,15 @@
         '<button type="button" class="mxa-notice-btn"></button>' +
       '</div>' +
       '<div class="mxa-switcher-panel">' +
-        '<div class="mxa-switcher-head">Saved drafts</div>' +
+        '<div class="mxa-switcher-head">' +
+          '<div class="mxa-tabs">' +
+            '<button type="button" class="mxa-tab mxa-tab-active" data-tab="drafts">Drafts</button>' +
+            '<button type="button" class="mxa-tab" data-tab="history">Submitted</button>' +
+            '<button type="button" class="mxa-history-clear-all" hidden>Clear all</button>' +
+          '</div>' +
+        '</div>' +
         '<div class="mxa-switcher-list"></div>' +
+        '<div class="mxa-history-list" hidden></div>' +
       '</div>' +
       '<div class="mxa-bar">' +
         '<div class="mxa-pill" role="status" aria-live="polite">' +
@@ -397,10 +518,17 @@
     ui.switcherCount = root.querySelector('.mxa-switcher-count');
     ui.switcherPanel = root.querySelector('.mxa-switcher-panel');
     ui.switcherList = root.querySelector('.mxa-switcher-list');
+    ui.historyList = root.querySelector('.mxa-history-list');
+    ui.historyClearAll = root.querySelector('.mxa-history-clear-all');
+    ui.tabs = Array.prototype.slice.call(root.querySelectorAll('.mxa-tab'));
     ui.clear.addEventListener('click', clearDraft);
     ui.newBtn.addEventListener('click', newReport);
     ui.noticeBtn.addEventListener('click', toggleAttachments);
     ui.switcherToggle.addEventListener('click', toggleSwitcher);
+    ui.historyClearAll.addEventListener('click', clearAllHistory);
+    ui.tabs.forEach(function (tabBtn) {
+      tabBtn.addEventListener('click', function () { setPanelTab(tabBtn.dataset.tab); });
+    });
     document.addEventListener('click', function (e) {
       if (!ui.switcherPanel.classList.contains('mxa-open')) return;
       if (root.contains(e.target)) return;
@@ -760,11 +888,156 @@
     }
   }
 
+  // ---------------------------------------------------------------- history
+  var panelTab = 'drafts';
+  var openHistoryEntry = null;   // submittedAt of the one expanded, if any
+
+  // Field keys are raw storage keys (person[]#0, aq[2][answer]#0, ...), not
+  // the question text — that only exists on the live form at save time, and
+  // history has to survive long after the form that produced it is gone. A
+  // light, generic cleanup instead of true labels: strip the #index, replace
+  // bracket/underscore noise with spaces, and number repeated fields for
+  // people ("Person" → "Person 1", "Person 2").
+  function formatFieldKey(key) {
+    var m = key.match(/^(.*?)#(\d+)$/);
+    var base = m ? m[1] : key;
+    var index = m ? parseInt(m[2], 10) : 0;
+
+    // aq[N][answer] is Maxient's own name for "additional question N" — the
+    // actual question text isn't available here (only on the live form, at
+    // save time), but "Question N" reads far better than the raw key ever
+    // could, so it earns a special case the generic cleanup below can't match.
+    var aq = base.match(/^aq\[(\d+)\]\[answer\]$/);
+    if (aq) return 'Question ' + aq[1];
+
+    var words = base.replace(/\[\]|\[|\]/g, ' ').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+    words = words.charAt(0).toUpperCase() + words.slice(1);
+    return index > 0 ? words + ' ' + (index + 1) : words;
+  }
+
+  function historyDetailRows(fields) {
+    var rows = [];
+    for (var key in fields) {
+      var v = fields[key];
+      var text = Array.isArray(v) ? v.join(', ') : String(v || '');
+      if (!text) continue;
+      rows.push({ label: formatFieldKey(key), value: text });
+    }
+    return rows;
+  }
+
+  function clearAllHistory() {
+    if (!window.confirm('Delete all submission history?\n\nThis only removes the local record of what you submitted — it does not affect any report Maxient already received. This cannot be undone.')) return;
+    writeHistory([]);
+    openHistoryEntry = null;
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (!ui.historyList) return;
+    var list = readHistory();
+    ui.historyList.innerHTML = '';
+    if (ui.historyClearAll) ui.historyClearAll.hidden = !list.length;
+
+    if (!list.length) {
+      var empty = document.createElement('div');
+      empty.className = 'mxa-switcher-empty';
+      empty.textContent = 'Nothing submitted yet.';
+      ui.historyList.appendChild(empty);
+      return;
+    }
+
+    for (var i = 0; i < list.length; i++) {
+      (function (entry) {
+        var row = document.createElement('div');
+        row.className = 'mxa-history-row';
+
+        var summary = document.createElement('button');
+        summary.type = 'button';
+        summary.className = 'mxa-history-summary';
+        var num = document.createElement('div');
+        num.className = 'mxa-history-num';
+        num.textContent = entry.reportNumber ? '#' + entry.reportNumber : 'Report number not detected';
+        var meta = document.createElement('div');
+        meta.className = 'mxa-history-time';
+        meta.textContent = dateLabel(entry.submittedAt) + ' · ' + entry.institution + ' · layout ' + entry.layout;
+        summary.appendChild(num);
+        summary.appendChild(meta);
+
+        var detail = document.createElement('div');
+        detail.className = 'mxa-history-detail';
+        var isOpen = openHistoryEntry === entry.submittedAt;
+        detail.hidden = !isOpen;
+        var fieldRows = historyDetailRows(entry.fields || {});
+        if (!fieldRows.length) {
+          var noFields = document.createElement('div');
+          noFields.className = 'mxa-history-empty';
+          noFields.textContent = 'No field data was captured for this submission.';
+          detail.appendChild(noFields);
+        } else {
+          fieldRows.forEach(function (r) {
+            var f = document.createElement('div');
+            f.className = 'mxa-history-field';
+            var lab = document.createElement('span');
+            lab.className = 'mxa-history-field-label';
+            lab.textContent = r.label;
+            var val = document.createElement('span');
+            val.className = 'mxa-history-field-value';
+            val.textContent = r.value;
+            f.appendChild(lab);
+            f.appendChild(val);
+            detail.appendChild(f);
+          });
+        }
+
+        summary.addEventListener('click', function () {
+          openHistoryEntry = isOpen ? null : entry.submittedAt;
+          renderHistory();
+        });
+
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'mxa-switcher-del mxa-history-del';
+        del.title = 'Remove this from history';
+        del.textContent = '×';
+        del.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (!window.confirm('Remove this submission record from history?\n\nThis only deletes the local record — it does not affect the report Maxient already received.')) return;
+          var all = readHistory().filter(function (x) { return x.submittedAt !== entry.submittedAt; });
+          writeHistory(all);
+          renderHistory();
+        });
+
+        var head = document.createElement('div');
+        head.className = 'mxa-history-head';
+        head.appendChild(summary);
+        head.appendChild(del);
+
+        row.appendChild(head);
+        row.appendChild(detail);
+        ui.historyList.appendChild(row);
+      })(list[i]);
+    }
+  }
+
+  function setPanelTab(tab) {
+    panelTab = tab;
+    ui.tabs.forEach(function (t) { t.classList.toggle('mxa-tab-active', t.dataset.tab === tab); });
+    ui.switcherList.hidden = tab !== 'drafts';
+    ui.historyList.hidden = tab !== 'history';
+    if (tab === 'drafts') {
+      if (ui.historyClearAll) ui.historyClearAll.hidden = true;
+      renderSwitcher();
+    } else {
+      renderHistory();   // sets historyClearAll's own hidden state from the entry count
+    }
+  }
+
   function toggleSwitcher() {
     var opening = !ui.switcherPanel.classList.contains('mxa-open');
     ui.switcherPanel.classList.toggle('mxa-open', opening);
     ui.switcherToggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
-    if (opening) renderSwitcher();
+    if (opening) setPanelTab(panelTab);
   }
 
   // Saves whatever's on screen under the current slot, then starts a fresh,
@@ -802,20 +1075,13 @@
     buildUI();
     snapshotChoiceValues();   // before anything can blank them
     enhanceTextareas();
-
-    // Pick up wherever "New report" or "Switch to this report" last left off
-    // for this institution+layout, before anything reads KEY.
-    try {
-      var savedSlot = localStorage.getItem(ACTIVE_PTR);
-      if (savedSlot) setSlot(savedSlot);
-    } catch (e) { /* nothing to do */ }
-
     renderSwitcher();
 
-    // A draft parked by a previous submit means that submit went through
-    // (or the user navigated away) — this is a fresh form, so let it go.
-    drop(PENDING_KEY);
-
+    // checkForPendingSubmission() already resolved PENDING_KEY (restored it
+    // to KEY if this is a blocked-submit re-render, archived it to history
+    // and dropped it if the submission actually went through) and picked up
+    // the active slot, both before this function ever runs — nothing left to
+    // do here for either.
     draft = read(KEY);
     if (draft && Date.now() - (draft.savedAt || 0) > MAX_AGE_DAYS * 864e5) {
       drop(KEY);

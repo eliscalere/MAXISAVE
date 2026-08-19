@@ -50,6 +50,10 @@
         <h3>Your attachment choice</h3>
         <p><code class="inline">localStorage</code> — remembers whether you opted in.</p>
       </div>
+      <div class="card">
+        <h3>Submission history</h3>
+        <p><code class="inline">localStorage</code> — a record of what you submitted, so you can look back at it and find the report number later.</p>
+      </div>
     </div>
     <p>
       Because this is ordinary browser storage tied to one site and one
@@ -75,6 +79,14 @@
       — whichever comes first. You can also remove it at any time by clearing
       site data for <code class="inline">cm.maxient.com</code> in Chrome.
     </p>
+    <p>
+      Submission history is different: it doesn't expire on its own. It's
+      meant to be a record you can come back to, so it's kept until you
+      delete it yourself — one entry at a time, or all at once with
+      <strong>Clear all</strong> — or until it's pushed out by newer
+      submissions once the record holds 50. Each entry keeps everything you
+      wrote in that report, not only the report number.
+    </p>
   </section>
 
   <section>
@@ -92,8 +104,10 @@
       personal information about named individuals. While Maxisave is saving a
       draft, that text sits unencrypted in your browser profile until you
       submit, clear it, or the 14 days elapse — the same way an unsent draft
-      sits in any application. On a shared or lab computer, press
-      <strong>Clear</strong> before you walk away.
+      sits in any application. Submission history is kept even longer, since
+      unlike a draft it's meant to persist. On a shared or lab computer, press
+      <strong>Clear</strong> before you walk away, and clear submission
+      history from the Submitted tab if you don't need to keep it.
     </div>
   </section>
 

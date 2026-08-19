@@ -75,6 +75,10 @@ content script scoped to `https://cm.maxient.com/reportingform.php*`.
   **Saved**, and clicking the non-active one there switches back to it.
 - Long-form narrative questions get a bigger, resizable textarea instead of
   the cramped 5-row default.
+- After a real submission goes through, it's archived under a **Submitted**
+  tab in the same panel as Saved — report number (when it can be found on the
+  page) plus everything you'd written, so it's still there to look back at
+  after the draft itself is gone.
 
 ## Works on every Maxient form, not just this one
 
@@ -122,6 +126,44 @@ them:
 Drafts saved before v1.2.0 still work with no migration: the unslotted key
 (`institution:layout_id`, no trailing slot) is exactly what every draft
 already used, so it's just "the first report" now rather than "the only one."
+
+## Submission history
+
+Maxient's form POSTs back to the exact same URL it's already on — verified
+directly (`FORM.action` equals `location.href`) — so whatever it serves after
+a real submission, success or validation error, loads under this same content
+script match with no manifest change needed. That response is a genuine
+server render, not a client-side transition, which gives a reliable signal:
+if `#IR` is gone, the submission actually went through rather than being
+blocked. `localStorage` persists across that navigation, so the draft parked
+the instant Submit was pressed is still there for the fresh page load to pick
+up and archive.
+
+**The report-number extraction is an unverified best-effort guess.** This
+project has never seen Maxient's real confirmation page and never will — the
+only way to check would be filing an actual report, which it won't do. So
+instead of matching real wording, it scans the page's visible text for a
+label ("report/reference/confirmation/tracking/case/incident" + "number" or
+"#") followed within about 40 characters by something that looks like a code
+— has a digit, and isn't an ordinary lowercase word. Verified against
+eleven synthetic cases, including phrasing with a connector word in between
+("report number **is** R-2026-004821" — a single combined regex missed this;
+splitting label-finding from code-extraction fixed it), a label with no real
+code following it, and plain form-page text that must **not** false-positive.
+All eleven passed, but "handles invented examples" and "handles Maxient's
+actual wording" are different claims — if it comes back "Report number not
+detected" on a real submission, the submission is still archived with
+whatever was written, just without a number attached; the pattern can be
+retuned once someone reports what the real page actually says.
+
+Each entry keeps the full field snapshot, not just the number, since that was
+the actual ask — "history to see the details of the report." Field keys are
+raw storage keys (`person[]#0`, `aq[2][answer]#0`), not question text, since
+the text only exists on the live form and history has to outlive it; a light
+generic cleanup turns those into "Person 2" and "Question 2" rather than
+showing the raw keys. History is capped at 50 entries (oldest drop first) —
+see [Stress test results](#stress-test-results) for why that number, not a
+bigger one.
 
 ## Bigger textareas
 
@@ -216,7 +258,11 @@ newlines (`"\nRespondent"`), which made the old selector check fragile.
 
 `localStorage` on the origin `https://cm.maxient.com`, under the key
 `maxient-autosave:<institution>:<layout_id>` — for the ASU conduct form that's
-`maxient-autosave:ArizonaStateUniv:0`.
+`maxient-autosave:ArizonaStateUniv:0` — plus `:<slot>` when it's not the first
+report on that form (see [Working on more than one report](#working-on-more-than-one-report)).
+Submission history lives at the single key `maxient-autosave:history`, shared
+across every institution and layout, since browsing "everything I've
+submitted" is the point of it.
 
 That's per-browser and per-machine: a draft saved on your laptop is not visible
 in another browser, another profile, or another computer. Nothing is transmitted
@@ -277,6 +323,14 @@ failing silently or losing the existing draft.
 
 Corrupt or tampered payloads (`not json`, `{}`, `null`, `[]`, `{"fields":null}`)
 are all rejected safely and treated as "no draft" — none throw.
+
+**Submission history's cap is set from this same measurement.** Unlike a
+draft, history keeps growing rather than staying at one entry per form, so it
+can't lean on "only 1.26% of quota" the way a draft does. 50 entries at the
+worst-case 64.3KB each is 3.2MB — about 64% of the 5MB quota, leaving room for
+active drafts and other institutions' history alongside it. Real reports run
+far smaller than the worst case, but the cap has to hold even if every single
+one doesn't.
 
 ## How long does it save for?
 

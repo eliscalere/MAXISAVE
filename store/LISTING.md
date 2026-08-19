@@ -79,6 +79,9 @@ WHAT IT DOES
   the Saved list.
 • Long-form narrative questions get a bigger, resizable text box instead of
   the default cramped one.
+• After a report is actually submitted, it's archived under a Submitted tab —
+  report number when one can be found, plus everything you wrote — so it's
+  still there to look back at after the draft itself is gone.
 
 YOUR DATA STAYS ON YOUR COMPUTER
 
