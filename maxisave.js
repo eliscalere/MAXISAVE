@@ -441,7 +441,7 @@
         '<span class="mxa-notice-text"></span>' +
         '<button type="button" class="mxa-notice-btn"></button>' +
       '</div>' +
-      '<div class="mxa-switcher-panel" hidden>' +
+      '<div class="mxa-switcher-panel">' +
         '<div class="mxa-switcher-head">Saved drafts</div>' +
         '<div class="mxa-switcher-list"></div>' +
       '</div>' +
@@ -449,8 +449,8 @@
         '<div class="mxa-pill" role="status" aria-live="polite">' +
           '<span class="mxa-dot"></span><span class="mxa-label">Autosave on</span>' +
         '</div>' +
-        '<button type="button" class="mxa-switcher-toggle" title="See drafts saved for other forms">' +
-          'Saved <span class="mxa-switcher-count">0</span>' +
+        '<button type="button" class="mxa-switcher-toggle" title="See drafts saved for other forms" aria-expanded="false">' +
+          'Saved <span class="mxa-switcher-count">0</span><span class="mxa-switcher-chevron">▾</span>' +
         '</button>' +
         '<button type="button" class="mxa-new" title="Save this report and start a new, empty one">New report</button>' +
         '<button type="button" class="mxa-clear" title="Delete the saved draft and empty the form">Clear</button>' +
@@ -473,6 +473,11 @@
     ui.newBtn.addEventListener('click', newReport);
     ui.noticeBtn.addEventListener('click', toggleAttachments);
     ui.switcherToggle.addEventListener('click', toggleSwitcher);
+    document.addEventListener('click', function (e) {
+      if (!ui.switcherPanel.classList.contains('mxa-open')) return;
+      if (root.contains(e.target)) return;
+      toggleSwitcher();
+    }, true);
 
     var panel = document.createElement('div');
     panel.className = 'mxa-parties';
@@ -839,9 +844,10 @@
   }
 
   function toggleSwitcher() {
-    var open = ui.switcherPanel.hidden;
-    ui.switcherPanel.hidden = !open;
-    if (open) renderSwitcher();
+    var opening = !ui.switcherPanel.classList.contains('mxa-open');
+    ui.switcherPanel.classList.toggle('mxa-open', opening);
+    ui.switcherToggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    if (opening) renderSwitcher();
   }
 
   // Saves whatever's on screen under the current slot, then starts a fresh,
