@@ -701,13 +701,11 @@
   // literal last segment rather than by part count — a slot id could in
   // principle be any string, but this code only ever generates ones starting
   // with 't', so a collision isn't a real risk.
+  // "Your full name:" (reporters_full_name) is who's actually filing the
+  // report, so it's a better label for telling drafts apart than the
+  // institution/layout every draft on this page already shares.
   function draftPreview(fields) {
-    var candidates = ['reporters_full_name#0', 'person[]#0'];
-    for (var i = 0; i < candidates.length; i++) {
-      var v = fields[candidates[i]];
-      if (v) return v;
-    }
-    return null;
+    return fields['reporters_full_name#0'] || null;
   }
 
   function listDrafts() {
@@ -800,14 +798,17 @@
           info.title = 'Switch to this report';
           info.addEventListener('click', function () { switchToDraft(d); });
         }
+        // Lead with when it was saved and who's filing it — that's what tells
+        // two reports on the *same* form apart. Institution/layout matters
+        // less here (every entry a click could switch to already shares it)
+        // so it's demoted to the smaller line underneath.
         var top = document.createElement('div');
         top.className = 'mxa-switcher-inst';
-        var label = d.institution + ' · layout ' + d.layout;
-        if (d.preview) label += ' — ' + d.preview;
-        top.textContent = label + (d.isCurrent ? ' (this page)' : '');
+        top.textContent = dateLabel(d.savedAt) + (d.preview ? ' — ' + d.preview : '') +
+          (d.isCurrent ? ' (this page)' : '');
         var bottom = document.createElement('div');
         bottom.className = 'mxa-switcher-time';
-        bottom.textContent = 'Saved ' + dateLabel(d.savedAt);
+        bottom.textContent = d.institution + ' · layout ' + d.layout;
         info.appendChild(top);
         info.appendChild(bottom);
 
@@ -818,7 +819,8 @@
         del.textContent = '×';
         del.addEventListener('click', function (e) {
           e.stopPropagation();
-          if (!window.confirm('Delete the saved draft for ' + d.institution + ' (layout ' + d.layout + ')?')) return;
+          var who = d.preview ? d.preview + "'s" : 'the';
+          if (!window.confirm('Delete ' + who + ' saved draft from ' + dateLabel(d.savedAt) + '?')) return;
           drop(d.key);
           drop(d.key + ':pending');
           drop(d.key + ':files');
