@@ -108,8 +108,8 @@ endorsed by, or sponsored by Maxient LLC.
 **Single purpose**
 ```
 Maxisave saves an in-progress Maxient incident report form to local browser
-storage so the draft survives a page refresh, and restores it the next time the
-form is opened.
+storage so the draft survives a page refresh, restores it the next time the
+form is opened, and keeps a local record of reports after they're submitted.
 ```
 
 **Host permission justification** (`https://cm.maxient.com/reportingform.php*`)
