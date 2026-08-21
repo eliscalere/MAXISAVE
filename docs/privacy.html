@@ -18,6 +18,7 @@
     <nav class="site">
       <a href="index.html">Home</a>
       <a href="support.html">Support</a>
+      <a href="tos.html">Terms</a>
       <a href="https://github.com/eliscalere/MAXISAVE">GitHub</a>
     </nav>
   </div>
@@ -28,37 +29,47 @@
   <section>
     <h2>The short version</h2>
     <p>
-      Maxisave does not collect, transmit, sell, or share any data. Nothing you
-      type ever leaves your computer. There are no servers, no analytics, no
-      telemetry, no third-party services, and no network requests of any kind.
+      Maxisave itself does not collect, transmit, sell, or share any data,
+      and has no servers, analytics, or telemetry of its own — but two
+      other parties are involved. <strong>Sign in with Google</strong> is
+      required to use the extension's saving features at all: signed in,
+      drafts, attachments, and submission history live in a hidden,
+      app-only folder in your own Google Drive, not on any server Maxisave
+      operates. <strong>Format with AI</strong> is a separate, genuinely
+      opt-in feature: only if you click its button does it send the
+      incident description and involved parties' names/ID numbers to an AI
+      you pick, in a small separate window, under your own account there.
+      See below for exactly what each sends and to whom.
     </p>
   </section>
 
   <section>
     <h2>What is stored, and where</h2>
-    <p>Everything is stored locally in your own browser profile, on your own machine:</p>
+    <p>
+      Two layers: an internal local buffer on this machine, written the
+      moment you type (so a brief network problem can't lose your work),
+      and — once you sign in — your own Google Drive, which is where this
+      data is actually meant to live going forward.
+    </p>
     <div class="grid">
       <div class="card">
         <h3>Report text</h3>
-        <p><code class="inline">localStorage</code> on <code class="inline">cm.maxient.com</code> — put back after a refresh.</p>
+        <p><code class="inline">localStorage</code> on <code class="inline">cm.maxient.com</code>, and once signed in, a hidden folder in your own Google Drive.</p>
       </div>
       <div class="card">
-        <h3>Attachments (opt-in only)</h3>
-        <p>IndexedDB (<code class="inline">maxisave</code> → <code class="inline">attachments</code>) — restored only if you chose to save them.</p>
-      </div>
-      <div class="card">
-        <h3>Your attachment choice</h3>
-        <p><code class="inline">localStorage</code> — remembers whether you opted in.</p>
+        <h3>Attachments — automatic, no opt-in</h3>
+        <p>IndexedDB (<code class="inline">maxisave</code> → <code class="inline">attachments</code>) locally; base64-encoded into that draft's own Drive entry once signed in.</p>
       </div>
       <div class="card">
         <h3>Submission history</h3>
-        <p><code class="inline">localStorage</code> — a record of what you submitted, so you can look back at it and find the report number later.</p>
+        <p><code class="inline">localStorage</code>, and once signed in, the same Drive file — so you can look back at it and find the report number later, from any computer you're signed in on.</p>
       </div>
     </div>
     <p>
-      Because this is ordinary browser storage tied to one site and one
-      profile, a draft saved on one computer cannot be read from another, by
-      another browser, or by another profile on the same computer.
+      The local buffer is per-browser and per-machine — nothing about it
+      moves between computers on its own. Signing in with Google is what
+      makes drafts, attachments, and history follow you between computers;
+      see "Sync with Google" below.
     </p>
   </section>
 
@@ -67,7 +78,6 @@
     <ul>
       <li>Session security tokens (<code class="inline">x_requestor_token</code>, <code class="inline">x_requestor_ip</code>, <code class="inline">x_requestor_starttime</code>) and the reCAPTCHA response.</li>
       <li>Any field of type <code class="inline">password</code>.</li>
-      <li>Attachments, unless you explicitly opt in.</li>
     </ul>
   </section>
 
@@ -90,11 +100,69 @@
   </section>
 
   <section>
+    <h2>Format with AI</h2>
+    <p>
+      The <strong>Format with AI</strong> button above the incident
+      description is opt-in and does nothing until you pick an AI in the
+      extension's settings popup and click it on the form. When you do, it
+      sends the description text plus each involved party's
+      <strong>name and ID number only</strong> — not role, date of birth,
+      email, or hall address — to that AI in a small separate window, under
+      whatever account is signed in there. That account is yours, not
+      Maxisave's; there is no Maxisave server and it never sees the
+      exchange. The reply replaces the description field if it parses as
+      expected, otherwise nothing changes.
+    </p>
+    <div class="callout warn">
+      <strong>A note on FERPA.</strong> Incident reports on this form are
+      education records about named students. A personal ChatGPT, Claude,
+      or Gemini account is not automatically covered by the kind of
+      data-processing agreement an institution's enterprise AI tooling
+      would have. Check your institution's policy on using consumer AI
+      accounts with student conduct data before using Format with AI on a
+      real report.
+    </div>
+  </section>
+
+  <section>
+    <h2>Sync with Google</h2>
+    <p>
+      Signing in with <strong>Sign in with Google</strong> is the front
+      door: the form shows only a sign-in button until you do, not a
+      working autosave interface. Signed in, Maxisave requests exactly one
+      Google OAuth scope — <code class="inline">drive.appdata</code> —
+      access to a hidden, app-only folder in your own Google Drive that
+      Maxisave can't see any other file in, that doesn't appear in your
+      normal Drive view, and that nothing else in your Drive can see into
+      either. That folder holds one file containing the same drafts and
+      submission history described above, plus attachments (base64-encoded
+      into that draft's own entry) — nothing more. There is no Maxisave
+      server in this path — the extension talks directly to Google's Drive
+      API with your account's own OAuth token. Sync runs shortly after
+      every save, with a 30-second backstop and one more right after a
+      submission, but only once you've signed in; it never prompts for
+      anything on its own. The same FERPA note above applies here too,
+      since synced content now includes attachments as well as text.
+    </p>
+  </section>
+
+  <section>
     <h2>Permissions</h2>
     <p>
-      Maxisave requests no Chrome permissions. It runs a single content script
-      limited to <code class="inline">cm.maxient.com/reportingform.php*</code>
-      and cannot see any other site.
+      Maxisave's core autosave feature requests no Chrome permissions and
+      only runs a content script on
+      <code class="inline">cm.maxient.com/reportingform.php*</code>. Format
+      with AI additionally needs <code class="inline">storage</code> (to
+      remember which AI you picked), <code class="inline">scripting</code>
+      and <code class="inline">tabs</code> (to open that AI's site and
+      paste the prompt in), and host access to
+      <code class="inline">chatgpt.com</code>,
+      <code class="inline">claude.ai</code>, and
+      <code class="inline">gemini.google.com</code>. Sync with Google needs
+      <code class="inline">identity</code> (Chrome's own OAuth sign-in) and
+      host access to <code class="inline">googleapis.com</code> (to talk to
+      the Drive API, <code class="inline">drive.appdata</code> scope only).
+      Maxisave cannot see or act on any other site.
     </p>
   </section>
 
@@ -138,6 +206,7 @@
     <div class="links">
       <a href="index.html">Home</a>
       <a href="support.html">Support</a>
+      <a href="tos.html">Terms</a>
       <a href="https://github.com/eliscalere/MAXISAVE">GitHub</a>
     </div>
   </div>
