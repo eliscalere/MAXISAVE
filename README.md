@@ -3,9 +3,9 @@
 </p>
 
 <p align="center">
-  <a href="https://eliscalere.github.io/MAXISAVE/">Homepage</a> ·
-  <a href="https://eliscalere.github.io/MAXISAVE/support.html">Support</a> ·
-  <a href="https://eliscalere.github.io/MAXISAVE/privacy.html">Privacy</a>
+  <a href="https://maxisave.scaleredesign.com/">Homepage</a> ·
+  <a href="https://maxisave.scaleredesign.com/support.html">Support</a> ·
+  <a href="https://maxisave.scaleredesign.com/privacy.html">Privacy</a>
 </p>
 
 # Maxisave
@@ -48,10 +48,11 @@ upload package with:
 ### GitHub Pages
 
 `docs/index.html`, `docs/support.html`, and `docs/privacy.html` are meant to be
-served at `https://eliscalere.github.io/MAXISAVE/`. One-time setup: repo
-**Settings → Pages → Source → Deploy from a branch → `main` / `docs`**. That
-also gives the privacy policy its required public URL for the Chrome Web Store
-listing — see the TODO in `store/LISTING.md`.
+served at `https://maxisave.scaleredesign.com/` (via `docs/CNAME`, with
+`maxisave.scaleredesign.com` CNAMEd to `eliscalere.github.io` in DNS). One-time
+setup: repo **Settings → Pages → Source → Deploy from a branch → `main` /
+`docs`**. That also gives the privacy policy its required public URL for the
+Chrome Web Store listing — see the TODO in `store/LISTING.md`.
 
 No sign-in, no permissions prompt, no network access — the extension only has a
 content script scoped to `https://cm.maxient.com/reportingform.php*`.

@@ -131,7 +131,7 @@ Data never leaves the device, so no collection categories apply.
 
 **Privacy policy URL**
 ```
-https://eliscalere.github.io/MAXISAVE/privacy.html
+https://maxisave.scaleredesign.com/privacy.html
 ```
 Only live once GitHub Pages is enabled (see checklist above) and the push has
 landed — give it a minute after enabling before it resolves.
