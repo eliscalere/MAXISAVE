@@ -14,7 +14,8 @@
 <header class="site">
   <div class="wrap">
     <img class="mark" src="assets/logo-transparent.png" alt="Maxisave">
-    <p class="tagline">Autosaves your Maxient incident report as you write it. Refresh, crash, or accidentally hit back — your draft is still there.</p>
+    <h1>Maxisave</h1>
+    <p class="tagline">Maxisave is a free Chrome extension by Scalere Design that autosaves your Maxient incident report as you write it. Refresh, crash, or accidentally hit back — your draft is still there.</p>
     <div class="cta-row">
       <a class="btn btn-primary" href="https://chromewebstore.google.com/">Get Maxisave for Chrome</a>
       <a class="btn btn-ghost" href="support.html">Support</a>
@@ -32,12 +33,14 @@
 <main class="wrap">
 
   <section>
-    <span class="badge">No servers · No accounts · No network requests</span>
+    <span class="badge">Free · Local-first · Optional Google sync</span>
     <h2 style="margin-top:14px;">Maxient's reporting form has no draft feature</h2>
     <p class="lede">
       A refresh, a timed-out session, or an accidental back-button takes a
       half-written incident report with it — including every Involved Parties
-      row you'd added. Maxisave fixes that quietly in the background.
+      row you'd added. Maxisave fixes that quietly in the background, and can
+      optionally sync your drafts across your own computers through your own
+      Google account.
     </p>
   </section>
 
@@ -65,20 +68,30 @@
         <p>The draft deletes itself the moment the report goes through.</p>
       </div>
       <div class="card">
-        <h3>Attachments are opt-in</h3>
-        <p>Files aren't saved by default. Choose to keep them per draft, and you're warned before closing a tab with unsaved attachments.</p>
+        <h3>Attachments save automatically</h3>
+        <p>Files you've uploaded to the form are saved and restored right along with the rest of the draft — no extra step.</p>
+      </div>
+      <div class="card">
+        <h3>Sync across your computers (optional)</h3>
+        <p>Sign in with Google and Maxisave keeps drafts in step across every computer you use, stored in a hidden, app-only folder in your own Google Drive — no Maxisave server, and nothing else in your Drive can see it.</p>
+      </div>
+      <div class="card">
+        <h3>Format with AI (optional)</h3>
+        <p>One click sends your incident description to ChatGPT, Claude, or Gemini — whichever you choose — to rewrite it as a formatted report. Every name and ID number is swapped for a placeholder before anything is sent, and swapped back locally once the reply comes back.</p>
       </div>
     </div>
   </section>
 
   <section>
-    <h2>Your data stays on your computer</h2>
+    <h2>What Maxisave does with your data</h2>
     <p>
-      There are no servers and no accounts. Maxisave makes no network requests
-      at all — everything lives in your own browser profile, so a draft saved
-      on one computer can't be opened on another. Session security tokens and
-      the reCAPTCHA response are deliberately never saved. Full details on the
-      <a href="privacy.html">privacy page</a>.
+      By default, everything lives only in your own browser profile — no
+      servers, no account required. Signing in with Google is entirely
+      optional and only used for the sync feature above; Maxisave never runs
+      its own server and never sees your Google credentials. Session security
+      tokens and the reCAPTCHA response are deliberately never saved. Full
+      details, including exactly what the Format with AI feature does and
+      does not send, are on the <a href="privacy.html">privacy page</a>.
     </p>
   </section>
 
